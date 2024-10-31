@@ -43,13 +43,15 @@ def get_share_price(file):
 
 def users(user_data, file, file_xlx):
     """Функция для взаимодействия с пользователем"""
+    greetings_result = greetings(user_data)
     transactions_excel = read_excel(file_xlx)
     transactions_filter_by_date = filtering_transactions_by_date(user_data, transactions_excel)
+    result_transaction_analysis = transaction_analysis(transactions_filter_by_date)
     json_string = top_five(transactions_filter_by_date)
     json_data = json.loads(json_string)
 
-    result = {"greeting" : greetings(user_data),
-              "cards" : transaction_analysis(transactions_filter_by_date),
+    result = {"greeting" : greetings_result,
+              "cards" : result_transaction_analysis,
               "top_transactions" : json_data,
               "currency_rates" : get_currency_rate(file),
               "stock_prices" : get_share_price(file)}
@@ -58,4 +60,4 @@ def users(user_data, file, file_xlx):
     return result_json
 
 
-print(users('20.12.2021 16:44:00', file_json, file_excel))
+users('20.12.2021 16:44:00', file_json, file_excel)
