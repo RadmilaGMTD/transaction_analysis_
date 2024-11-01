@@ -234,7 +234,7 @@ def test_get_category_cash(transactions_2: list) -> None:
     assert get_category_cash([]) == "За этот период кэшбэка не было"
 
 
-@patch("src.views.requests.get")
+@patch("src.utils.requests.get")
 def test_get_currency_rate(mock_get: Mock) -> None:
     """Проверка корректной работы функции"""
     mock_get.return_value.status_code = 200
@@ -243,7 +243,7 @@ def test_get_currency_rate(mock_get: Mock) -> None:
     os.remove(test_file_path)
 
 
-@patch("src.views.requests.get")
+@patch("src.utils.requests.get")
 def test_get_currency_rate_invalid(mock_get: Mock) -> None:
     """Проверка корректной работы функции"""
     mock_get.return_value.status_code = 500
@@ -253,7 +253,7 @@ def test_get_currency_rate_invalid(mock_get: Mock) -> None:
         os.remove(test_file_path)
 
 
-@patch("src.views.requests.get")
+@patch("src.utils.requests.get")
 def test_get_currency_rate_file(mock_get: Mock) -> None:
     """Функция проверяет как записывает файл"""
     mock_get.return_value.status_code = 200
@@ -265,7 +265,7 @@ def test_get_currency_rate_file(mock_get: Mock) -> None:
     os.remove(test_file_path)
 
 
-@patch("src.views.requests.get")
+@patch("src.utils.requests.get")
 def test_get_share_price(mock_get: Mock) -> None:
     """Проверка корректной работы функции"""
     mock_get.return_value.status_code = 200
@@ -274,7 +274,7 @@ def test_get_share_price(mock_get: Mock) -> None:
     os.remove(test_file_path)
 
 
-@patch("src.views.requests.get")
+@patch("src.utils.requests.get")
 def test_get_share_price_invalid(mock_get: Mock) -> None:
     """Проверка корректной работы функции"""
     mock_get.return_value.status_code = 500
@@ -284,7 +284,7 @@ def test_get_share_price_invalid(mock_get: Mock) -> None:
         os.remove(test_file_path)
 
 
-@patch("src.views.requests.get")
+@patch("src.utils.requests.get")
 def test_get_share_price_file(mock_get: Mock) -> None:
     """Функция проверяет как записывает файл"""
     mock_get.return_value.status_code = 200

@@ -6,10 +6,11 @@ import os
 from collections import defaultdict
 from json import JSONDecodeError
 from typing import Any
-
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+
 
 logger = logging.getLogger(__name__)
 console_handler = logging.StreamHandler()
@@ -189,3 +190,29 @@ def get_share_price(file: str) -> list:
     with open(file, "w") as f:
         json.dump(my_list, f)
     return my_list
+
+transactions = read_excel(file_excel)
+
+
+# def filter_date_events(date: str, transactions_: list, range_: str = "M") -> list:
+#     """Функция, которая выодит транзакции в заданный промежуток времени"""
+#     logger.info(f"Ищем {range_} период транзакций заданной даты {date}")
+#     new_list = []
+#     date_string = datetime.datetime.strptime(date, "%d.%m.%Y %H:%M:%S")
+#     if range_ == "W":
+#         start = date_string - datetime.timedelta(weeks=1)
+#     elif range_ == "Y":
+#         start = date_string - relativedelta(years=1)
+#     elif range_ == "M":
+#         start = date_string - relativedelta(months=1)
+#     elif range_ == "ALL":
+#         return [i for i in transactions_]
+#     for i in transactions_:
+#         data_2 = i.get("Дата операции")
+#         date_string_2 = datetime.datetime.strptime(data_2, "%d.%m.%Y %H:%M:%S")
+#         if start <= date_string_2 <= date_string:
+#             new_list.append(i)
+#     return new_list
+#
+#
+# print(filter_date_events("20.12.2021 14:22:12", transactions, "W"))
