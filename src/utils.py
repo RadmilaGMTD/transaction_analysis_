@@ -1,19 +1,24 @@
 import datetime
-from typing import Any
-import os
-import pandas as pd
-from collections import defaultdict
 import json
 import logging
+import math
+import os
+from collections import defaultdict
 from json import JSONDecodeError
+from typing import Any
 
+import pandas as pd
+import requests
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 console_handler = logging.StreamHandler()
 logger.addHandler(console_handler)
 logger.setLevel(logging.DEBUG)
 
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+file_excel = os.path.join(project_root, "data", "operations.xlsx")
 
 
 def greetings(date_time: str) -> str:
@@ -22,19 +27,19 @@ def greetings(date_time: str) -> str:
         logger.info("Приветствуем пользователя")
         date_string = datetime.datetime.strptime(date_time, "%d.%m.%Y %H:%M:%S")
         if 5 <= date_string.hour < 12:
-            return 'Доброе утро'
+            return "Доброе утро"
         elif 12 <= date_string.hour < 18:
-            return 'Добрый день'
+            return "Добрый день"
         elif 18 <= date_string.hour <= 23:
-            return 'Добрый вечер'
+            return "Добрый вечер"
         elif 0 <= date_string.hour < 5:
-            return 'Доброй ночи'
+            return "Доброй ночи"
     except ValueError:
         logger.error("Неправильная дата")
-        return "Неправильная дата"
+    return "Неправильная дата"
 
 
-def read_excel(file: Any = None) -> list:
+def read_excel(file: Any = None) -> list[Any]:
     """Функция, для чтения excel файла"""
     try:
         logger.info(f"Читаем файл {file} и выводим список транзакций")
@@ -53,7 +58,7 @@ def filtering_transactions_by_date(date_time: str, transactions: list) -> Any:
         date_string = datetime.datetime.strptime(date_time, "%d.%m.%Y %H:%M:%S")
         start_month = date_string.replace(day=1)
         for i in transactions:
-            data_2 = i.get('Дата операции')
+            data_2 = i.get("Дата операции")
             date_string_2 = datetime.datetime.strptime(data_2, "%d.%m.%Y %H:%M:%S")
             if start_month <= date_string_2 <= date_string:
                 new_list.append(i)
@@ -74,53 +79,113 @@ def transaction_analysis(transactions: list) -> list:
     """Функция выводит: номер карты, сумму, кэшбэк"""
     result = []
     logger.info("Ищем информацию по каждой карте(номер карты, расходы, кэшбэк)")
-    my_dict = defaultdict(lambda: {"total_spent": 0, "cashback": 0})
+    my_dict: defaultdict[str, dict[str, float]] = defaultdict(lambda: {"total_spent": 0, "cashback": 0})
     for transaction in transactions:
-        card_number = transaction.get('Номер карты', None)
+        card_number = transaction.get("Номер карты", None)
         if not isinstance(card_number, str):
             continue
         elif isinstance(card_number, str):
-            card_number = card_number.replace('*', '')
-        amount = transaction.get('Сумма операции с округлением',0)
+            card_number = card_number.replace("*", "")
+        amount = transaction.get("Сумма операции с округлением", 0)
         my_dict[card_number]["total_spent"] += amount
         my_dict[card_number]["cashback"] += calculate_cashback(amount)
     for card, value in my_dict.items():
-        result.append({"last_digits" : card, "total_spent" : round(value.get("total_spent"),2), "cashback" : round(value.get("cashback"),2)})
+        result.append(
+            {
+                "last_digits": card,
+                "total_spent": round(value.get("total_spent", 0), 2),
+                "cashback": round(value.get("cashback", 0), 2),
+            }
+        )
     return result
 
 
-def top_five(transactions: list) -> json:
+def top_five(transactions: list) -> str:
     """Топ-5 транзакций"""
     logger.info("Ищем Топ-5 транзакций по сумме платежа.")
     df = pd.DataFrame(transactions)
-    df['Сумма платежа'] = df['Сумма платежа'].abs()
-    sort_df = df.sort_values(by='Сумма платежа', ascending=False)
+    df["Сумма платежа"] = df["Сумма платежа"].abs()
+    sort_df = df.sort_values(by="Сумма платежа", ascending=False)
     top_five_df = sort_df.head()
-    return top_five_df.to_json(orient='records', force_ascii=False)
-
+    return top_five_df.to_json(orient="records", force_ascii=False)
 
 
 def filtering_transactions_by_month_and_year(year: str, month: str, transactions: list) -> Any:
-    try:
-        logger.info(f"Ищем транзакции за {month} месяц, {year} год.")
-        new_list = []
-        for i in transactions:
-            data_2 = i.get('Дата операции')
-            date_string_2 = datetime.datetime.strptime(data_2, "%d.%m.%Y %H:%M:%S")
-            if int(year) == date_string_2.year and int(month) == date_string_2.month:
-                new_list.append(i)
-        return new_list
-    except ValueError:
-        logger.error("Нет транзакций за этот месяц и год или дата введена неверна")
-        return "Нет транзакций за этот месяц и год или дата введена неверна"
+    """Функция ищет транзакции за указанный месяц и год"""
+    logger.info(f"Ищем транзакции за {month} месяц, {year} год.")
+    new_list = []
+    for i in transactions:
+        data_2 = i.get("Дата операции")
+        date_string_2 = datetime.datetime.strptime(data_2, "%d.%m.%Y %H:%M:%S")
+        if int(year) == date_string_2.year and int(month) == date_string_2.month:
+            new_list.append(i)
+    if not new_list:
+        logger.error(f"Дата введена неверна или отсутствуют транзакции за {month} месяц, {year} год")
+        return "Дата введена неверна или транзакции отсутствуют за этот период"
+    return new_list
 
 
 def read_excel_dataframe(file: Any = None) -> pd.DataFrame:
-    try:
-        logger.info(f"Читаем файл {file} и выводим данные в формате DataFrame")
-        """Функция, для чтения excel файла с выводов DataFrame"""
-        file_read_xlsx = pd.read_excel(file)
-        return file_read_xlsx
-    except (FileNotFoundError, JSONDecodeError):
-        logger.error("Файл не найден")
-        return []
+    """Функция, для чтения excel файла с выводов DataFrame"""
+    logger.info(f"Читаем файл {file} и выводим данные в формате DataFrame")
+    file_read_xlsx = pd.read_excel(file)
+    return file_read_xlsx
+
+
+def get_category_cash(transactions: list) -> Any:
+    """Функция выводит категории с кэшбэком"""
+    logger.info("Ищем категории с кэшбэком и сортируем по убыванию.")
+    my_dict: defaultdict[str, int] = defaultdict(int)
+    for transaction in transactions:
+        cash = transaction.get("Кэшбэк", None)
+        if isinstance(cash, (int, float)) and not math.isnan(cash):
+            category = transaction.get("Категория")
+            round_cash = round(cash)
+            if isinstance(category, str) and category.strip():
+                my_dict[category] += round_cash
+    if not dict(my_dict):
+        logger.error("За этот период кэшбэка не было")
+        return "За этот период кэшбэка не было"
+    sorted_result = dict(sorted(my_dict.items(), key=lambda item: item[1], reverse=True))
+    return sorted_result
+
+
+file_json = os.path.join(project_root, "data", "user_settings.json")
+
+
+def get_currency_rate(file: str) -> list:
+    """Функция выводит в файл курс валют"""
+    logger.info("Поиска курс валют")
+    url = "https://www.cbr-xml-daily.ru//daily_json.js"
+    response = requests.get(url)
+    my_list = list()
+    if response.status_code != 200:
+        logger.error("Не удалось получить курс валюты")
+        raise ValueError("Не удалось получить курс валюты")
+    data = response.json().get("Valute", None)
+    my_list = [{"currency": key, "rate": value.get("Value")} for key, value in data.items()]
+    logger.error(f"Записываем курс валют в файл {file}")
+    with open(file, "w") as f:
+        json.dump(my_list, f, indent=4)
+    return my_list
+
+
+def get_share_price(file: str) -> list:
+    """Функция выводит в файл стоимость акций из S&P500"""
+    logger.info("Поиск основных акций из S&P500")
+    my_list = list()
+    load_dotenv()
+    apikey = os.getenv("apikey")
+    response_ = requests.get(
+        f"https://financialmodelingprep.com/api/v3/quote/AAPL,AMZN,GOOGL,MSFT,TSLA?apikey={apikey}"
+    )
+    if response_.status_code != 200:
+        logger.error("Не удалось получить основные акции")
+        raise ValueError("Не удалось получить основные акции")
+    data = response_.json()
+    for i in data:
+        my_list.append({"stock": i.get("symbol"), "price": i.get("price")})
+    logger.error(f"Записываем акции в файл {file}")
+    with open(file, "w") as f:
+        json.dump(my_list, f)
+    return my_list
