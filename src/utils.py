@@ -74,7 +74,7 @@ def filtering_transactions_by_date(date_time: str, transactions: list) -> Any:
         return "Дата введена неверно"
 
 
-# print(filtering_transactions_by_date("10-02-2018 12:00:00", trans))
+# print(filtering_transactions_by_date("2018-02-10 12:00:00", trans))
 
 
 def calculate_cashback(amount: int) -> float:
@@ -109,7 +109,7 @@ def transaction_analysis(transactions: list) -> list:
     return result
 
 
-def top_five(transactions: list) -> Any:
+def top_five(transactions: list) -> list:
     """Топ-5 транзакций"""
     my_list = []
     my_dict: defaultdict = defaultdict()
@@ -123,8 +123,8 @@ def top_five(transactions: list) -> Any:
     top_five_df = sort_df.head()
     top_five_df_dict = top_five_df.to_dict(orient="records")
     for i in top_five_df_dict:
-        my_dict["date"] = i.get("Дата платежа")
-        my_dict["amount"] = i.get("Сумма платежа")
+        my_dict["date"] = i.get("Дата операции", None)[:10]
+        my_dict["amount"] = i.get("Сумма операции с округлением")
         my_dict["category"] = i.get("Категория")
         my_dict["description"] = i.get("Описание")
         my_list.append(dict(my_dict))
@@ -136,7 +136,7 @@ def top_five(transactions: list) -> Any:
 # print(top_five(transactions_filter_by_date))
 
 
-def filtering_transactions_by_month_and_year(year: str, month: str, transactions: list) -> Any:
+def filtering_transactions_by_month_and_year(year: str, month: str, transactions: list) -> list:
     """Функция ищет транзакции за указанный месяц и год"""
     logger.info(f"Ищем транзакции за {month} месяц, {year} год.")
     new_list = []

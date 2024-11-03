@@ -179,9 +179,9 @@ def test_transaction_analysis_not_str() -> None:
 def test_top_five(transactions: list) -> None:
     """Тестирует работу функции"""
     assert top_five(transactions) == [
-        {"amount": 562.67, "category": "Супермаркеты", "date": "20.12.2021", "description": "Магнит"},
-        {"amount": 505.67, "category": "Супермаркеты", "date": "20.12.2021", "description": "Колхоз"},
-        {"amount": 346.67, "category": "Супермаркеты", "date": "20.12.2021", "description": "Озон"},
+        {"date": "22.12.2021", "amount": 34.0, "category": "Супермаркеты", "description": "Магнит"},
+        {"date": "19.12.2021", "amount": 42.92, "category": "Супермаркеты", "description": "Колхоз"},
+        {"date": "21.12.2021", "amount": 172.69, "category": "Супермаркеты", "description": "Озон"},
     ]
 
 

@@ -19,4 +19,4 @@ def main(user_date: str, user_year: str, user_month: str, transactions_: list, u
 
 
 if __name__ == "__main__":
-    main("2021-01-10 12:00:00","2024", "10", transactions, "Супермаркеты")
+    main("2021-01-10 12:00:00", "2024", "10", transactions, "Супермаркеты")
