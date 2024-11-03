@@ -6,11 +6,10 @@ import os
 from collections import defaultdict
 from json import JSONDecodeError
 from typing import Any
-from dateutil.relativedelta import relativedelta
+
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-
 
 logger = logging.getLogger(__name__)
 console_handler = logging.StreamHandler()
@@ -26,7 +25,7 @@ def greetings(date_time: str) -> str:
     """Функция - приветствие"""
     try:
         logger.info("Приветствуем пользователя")
-        date_string = datetime.datetime.strptime(date_time, "%d.%m.%Y %H:%M:%S")
+        date_string = datetime.datetime.strptime(date_time, "%d-%m-%Y %H:%M:%S")
         if 5 <= date_string.hour < 12:
             return "Доброе утро"
         elif 12 <= date_string.hour < 18:
@@ -40,7 +39,7 @@ def greetings(date_time: str) -> str:
     return "Неправильная дата"
 
 
-def read_excel(file: Any = None) -> list[Any]:
+def read_excel(file: Any) -> list[Any]:
     """Функция, для чтения excel файла"""
     try:
         logger.info(f"Читаем файл {file} и выводим список транзакций")
@@ -51,22 +50,31 @@ def read_excel(file: Any = None) -> list[Any]:
         return []
 
 
+trans = read_excel(file_excel)
+
+
 def filtering_transactions_by_date(date_time: str, transactions: list) -> Any:
     """Функция фильтрует транзакции по дате"""
     try:
         logger.info(f"Ищем месячный период транзакций заданной даты {date_time}")
         new_list = []
-        date_string = datetime.datetime.strptime(date_time, "%d.%m.%Y %H:%M:%S")
+        date_string = datetime.datetime.strptime(date_time, "%d-%m-%Y %H:%M:%S")
         start_month = date_string.replace(day=1)
         for i in transactions:
             data_2 = i.get("Дата операции")
             date_string_2 = datetime.datetime.strptime(data_2, "%d.%m.%Y %H:%M:%S")
             if start_month <= date_string_2 <= date_string:
                 new_list.append(i)
+        if not new_list:
+            logger.warning("Список транзакций пуст. Возвращаем пустой список.")
+            return []
         return new_list
     except ValueError:
-        logger.error("Нет транзакций за этот месяц или дата введена неверна")
-        return "Нет транзакций за этот месяц или дата введена неверна"
+        logger.error("Дата введена неверно")
+        return "Дата введена неверно"
+
+
+# print(filtering_transactions_by_date("10-02-2018 12:00:00", trans))
 
 
 def calculate_cashback(amount: int) -> float:
@@ -101,14 +109,23 @@ def transaction_analysis(transactions: list) -> list:
     return result
 
 
-def top_five(transactions: list) -> str:
+def top_five(transactions: list) -> Any:
     """Топ-5 транзакций"""
     logger.info("Ищем Топ-5 транзакций по сумме платежа.")
+    if not transactions:
+        logger.warning("Список транзакций пуст. Возвращаем пустой список.")
+        return []
     df = pd.DataFrame(transactions)
     df["Сумма платежа"] = df["Сумма платежа"].abs()
     sort_df = df.sort_values(by="Сумма платежа", ascending=False)
     top_five_df = sort_df.head()
     return top_five_df.to_json(orient="records", force_ascii=False)
+
+
+# trans = read_excel(file_excel)
+# transactions_filter_by_date = filtering_transactions_by_date("10-10-2022 12:00:00", trans)
+# print(transactions_filter_by_date)
+# print(top_five(transactions_filter_by_date))
 
 
 def filtering_transactions_by_month_and_year(year: str, month: str, transactions: list) -> Any:
@@ -121,8 +138,8 @@ def filtering_transactions_by_month_and_year(year: str, month: str, transactions
         if int(year) == date_string_2.year and int(month) == date_string_2.month:
             new_list.append(i)
     if not new_list:
-        logger.error(f"Дата введена неверна или отсутствуют транзакции за {month} месяц, {year} год")
-        return "Дата введена неверна или транзакции отсутствуют за этот период"
+        logger.error(f"Отсутствуют транзакции за {month} месяц, {year} год. Возвращаем пустой список.")
+        return []
     return new_list
 
 
@@ -191,8 +208,8 @@ def get_share_price(file: str) -> list:
         json.dump(my_list, f)
     return my_list
 
-transactions = read_excel(file_excel)
 
+# transactions = read_excel(file_excel)
 
 # def filter_date_events(date: str, transactions_: list, range_: str = "M") -> list:
 #     """Функция, которая выодит транзакции в заданный промежуток времени"""

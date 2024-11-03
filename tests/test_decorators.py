@@ -1,9 +1,7 @@
 import os
 import tempfile
-from typing import Any
 
 from src.decorators import log
-from src.reports import spending_by_category
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 file_reports = os.path.join(project_root, "data", "reports.txt")

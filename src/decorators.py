@@ -1,6 +1,6 @@
 import os
 from functools import wraps
-from typing import Any, Optional
+from typing import Any
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 file_reports = os.path.join(project_root, "data", "reports.txt")

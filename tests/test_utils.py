@@ -1,7 +1,6 @@
 import json
 import os
 from typing import Any
-from unittest import removeResult
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -55,10 +54,10 @@ def transactions_2() -> list:
 @pytest.mark.parametrize(
     "data, expected",
     [
-        ("31.12.2021 16:44:00", "Добрый день"),
-        ("31.12.2021 18:44:00", "Добрый вечер"),
-        ("31.12.2021 08:44:00", "Доброе утро"),
-        ("31.12.2021 00:44:00", "Доброй ночи"),
+        ("31-12-2021 16:44:00", "Добрый день"),
+        ("31-12-2021 18:44:00", "Добрый вечер"),
+        ("31-12-2021 08:44:00", "Доброе утро"),
+        ("31-12-2021 00:44:00", "Доброй ночи"),
     ],
 )
 def test_greetings(data: str, expected: list) -> None:
@@ -92,11 +91,16 @@ def test_valid_file_excel(mock_read_excel: Any) -> None:
     assert file_read_excel == expected_result
 
 
+def test_valid_file_excel_invalid() -> None:
+    """Корректная работа функции без файла."""
+    assert read_excel("") == []
+
+
 @pytest.mark.parametrize(
     "data, expected",
     [
         (
-            "21.12.2021 10:09:30",
+            "21-12-2021 10:09:30",
             [
                 {
                     "Дата операции": "21.12.2021 10:09:30",
@@ -123,9 +127,12 @@ def test_filtering_transactions_by_date(data: str, transactions: list, expected:
 
 def test_filtering_transactions_by_date_invalid(transactions: list) -> None:
     """Тестирует работу функции, если задана неправильная дата"""
-    assert (
-        filtering_transactions_by_date("1111", transactions) == "Нет транзакций за этот месяц или дата введена неверна"
-    )
+    assert filtering_transactions_by_date("1111", transactions) == "Дата введена неверно"
+
+
+def test_filtering_transactions_by_date_empty_list() -> None:
+    """Тестирует работу функции, если список транзакций пуст"""
+    assert filtering_transactions_by_date("10-10-2020 20:13:13", []) == []
 
 
 @pytest.mark.parametrize("amount, expected", [(150, 1.50), (2068.56, 20.69), (0, 0)])
@@ -166,6 +173,11 @@ def test_top_five(transactions: list) -> None:
     )
 
 
+def test_top_five_empty_list() -> None:
+    """Тестирует работу функции, если список транзакций пустой"""
+    assert top_five([]) == []
+
+
 @pytest.mark.parametrize(
     "year, month, expected",
     [
@@ -196,9 +208,9 @@ def test_top_five(transactions: list) -> None:
                 },
             ],
         ),
-        ("2021", "05", "Дата введена неверна или транзакции отсутствуют за этот период"),
-        ("2020", "12", "Дата введена неверна или транзакции отсутствуют за этот период"),
-        ("2", "0", "Дата введена неверна или транзакции отсутствуют за этот период"),
+        ("2021", "05", []),
+        ("2020", "12", []),
+        ("2", "0", []),
     ],
 )
 def test_filtering_transactions_by_month_and_year(year: str, month: str, transactions: list, expected: list) -> None:
