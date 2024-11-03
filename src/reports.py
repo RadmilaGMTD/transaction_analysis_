@@ -17,22 +17,30 @@ def spending_by_category(category: str, date: Any) -> str:
     if date is None:
         date = datetime.datetime.now()
     else:
-        date = datetime.datetime.strptime(date, "%d-%m-%Y %H:%M:%S")
+        date = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
     three_months_ago = date - pd.DateOffset(months=3)
     filter_category = transactions[transactions["Категория"] == category].copy()
-    filter_category.loc[:, "Дата операции"] = pd.to_datetime(
-        filter_category["Дата операции"], format="%d.%m.%Y %H:%M:%S"
-    )
-    filtered_dates = filter_category[
-        (filter_category["Дата операции"] >= three_months_ago) & (filter_category["Дата операции"] <= date)
-    ]
+    df_date = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+    filter_category = transactions[(three_months_ago <= df_date) & (df_date <= date)]
+
+    # filter_category.loc[:, "Дата операции"] = pd.to_datetime(
+    #     filter_category["Дата операции"], format="%d.%m.%Y %H:%M:%S"
+    # )
+    # filtered_dates = filter_category[
+    #     (filter_category["Дата операции"] >= three_months_ago) & (filter_category["Дата операции"] <= date)
+    # ]
 
     result_dict = {
         "Категория": category,
-        "Траты": round(filtered_dates["Сумма операции"].sum(), 2),
+        "Траты": round(filter_category["Сумма операции"].sum(), 2),
         "Начало": three_months_ago.strftime("%Y-%m-%d"),
         "Конец": date.strftime("%Y-%m-%d"),
     }
     if not result_dict.get("Траты"):
         return "За этот период не было трат."
     return json.dumps(result_dict, ensure_ascii=False, indent=4)
+
+
+# df_date = pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+# transactions = transactions[(start_date <= df_date) & (df_date <= end_date)]
+# print(spending_by_category("Супермаркеты", "12-05-2020 12:00:00"))

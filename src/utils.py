@@ -25,7 +25,7 @@ def greetings(date_time: str) -> str:
     """Функция - приветствие"""
     try:
         logger.info("Приветствуем пользователя")
-        date_string = datetime.datetime.strptime(date_time, "%d-%m-%Y %H:%M:%S")
+        date_string = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
         if 5 <= date_string.hour < 12:
             return "Доброе утро"
         elif 12 <= date_string.hour < 18:
@@ -58,7 +58,7 @@ def filtering_transactions_by_date(date_time: str, transactions: list) -> Any:
     try:
         logger.info(f"Ищем месячный период транзакций заданной даты {date_time}")
         new_list = []
-        date_string = datetime.datetime.strptime(date_time, "%d-%m-%Y %H:%M:%S")
+        date_string = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
         start_month = date_string.replace(day=1)
         for i in transactions:
             data_2 = i.get("Дата операции")
@@ -111,6 +111,8 @@ def transaction_analysis(transactions: list) -> list:
 
 def top_five(transactions: list) -> Any:
     """Топ-5 транзакций"""
+    my_list = []
+    my_dict: defaultdict = defaultdict()
     logger.info("Ищем Топ-5 транзакций по сумме платежа.")
     if not transactions:
         logger.warning("Список транзакций пуст. Возвращаем пустой список.")
@@ -119,11 +121,17 @@ def top_five(transactions: list) -> Any:
     df["Сумма платежа"] = df["Сумма платежа"].abs()
     sort_df = df.sort_values(by="Сумма платежа", ascending=False)
     top_five_df = sort_df.head()
-    return top_five_df.to_json(orient="records", force_ascii=False)
+    top_five_df_dict = top_five_df.to_dict(orient="records")
+    for i in top_five_df_dict:
+        my_dict["date"] = i.get("Дата платежа")
+        my_dict["amount"] = i.get("Сумма платежа")
+        my_dict["category"] = i.get("Категория")
+        my_dict["description"] = i.get("Описание")
+        my_list.append(dict(my_dict))
+    return my_list
 
 
-# trans = read_excel(file_excel)
-# transactions_filter_by_date = filtering_transactions_by_date("10-10-2022 12:00:00", trans)
+# transactions_filter_by_date = filtering_transactions_by_date("2021-10-10 12:00:00", trans)
 # print(transactions_filter_by_date)
 # print(top_five(transactions_filter_by_date))
 
